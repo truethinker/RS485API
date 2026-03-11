@@ -1,18 +1,49 @@
 const express = require("express");
 const app = express();
-
 app.use(express.json());
 
+const MAX_READINGS = 1000;
+const readings = [];
+
 app.post("/data", (req, res) => {
-    console.log("Received from TRB145:", req.body);
-    res.status(200).send("OK");
+  const payload = req.body;
+  let registers = null;
+
+  try {
+    if (payload?.data?.[0]?.data) {
+      registers = JSON.parse(payload.data[0].data);
+    }
+  } catch (e) {
+    console.error("Parse error:", e);
+  }
+
+  if (registers) {
+    readings.push({
+      timestamp: new Date().toISOString(),
+      data: registers,
+    });
+    if (readings.length > MAX_READINGS) readings.shift();
+  }
+
+  res.status(200).send("OK");
+});
+
+app.get("/latest", (req, res) => {
+  res.json(readings.length ? readings[readings.length - 1] : null);
+});
+
+app.get("/history", (req, res) => {
+  const n = Math.min(parseInt(req.query.n) || 50, MAX_READINGS);
+  res.json(readings.slice(-n));
 });
 
 app.get("/", (req, res) => {
-    res.send("API running");
+  res.json({
+    status: "running",
+    total_readings: readings.length,
+    last_reading: readings.length ? readings[readings.length - 1].timestamp : null,
+  });
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
