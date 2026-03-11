@@ -5,7 +5,8 @@ app.use(express.json());
 const MAX_READINGS = 1000;
 const readings = [];
 
-app.post("/data", (req, res) => {
+function handleData(req, res) {
+  console.log("Received from TRB145:", JSON.stringify(req.body));
   const payload = req.body;
   let registers = null;
 
@@ -26,7 +27,10 @@ app.post("/data", (req, res) => {
   }
 
   res.status(200).send("OK");
-});
+}
+
+app.post("/", handleData);
+app.post("/data", handleData);
 
 app.get("/latest", (req, res) => {
   res.json(readings.length ? readings[readings.length - 1] : null);
