@@ -11,8 +11,10 @@ function handleData(req, res) {
   let registers = null;
 
   try {
-    if (payload?.data?.[0]?.data) {
-      registers = JSON.parse(payload.data[0].data);
+    // TRB145 envía con clave "rtu_input1", no "data"
+    const entries = payload?.rtu_input1 || payload?.data;
+    if (entries?.[0]?.data) {
+      registers = JSON.parse(entries[0].data);
     }
   } catch (e) {
     console.error("Parse error:", e);
